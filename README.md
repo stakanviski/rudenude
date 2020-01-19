@@ -8,4 +8,4 @@ sh scripts/download_datasets.sh
     pip install google_images_download
 
 ### Look at usage examples
-    https://google-images-download.readthedocs.io/en/latest/examples.html#command-line-examples
+https://google-images-download.readthedocs.io/en/latest/examples.html#command-line-examples
