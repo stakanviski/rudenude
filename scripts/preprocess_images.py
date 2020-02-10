@@ -4,6 +4,7 @@ import sys
 
 from PIL import Image
 import numpy as np
+import scipy.ndimage
 import torch
 from torchvision import models
 from torchvision import transforms
@@ -44,22 +45,26 @@ def segment_image(img, net):
 
     inp = trans(img).unsqueeze(0)
     out = net(inp)["out"]
-    return torch.argmax(out.squeeze(), dim=0).detach().cpu().numpy()
+    mask = torch.argmax(out.squeeze(), dim=0).detach().cpu().numpy()
+    return mask == 15
 
-def render_mask(mask, layer):
-    idx = mask == layer
+def count_regions(mask):
+    _, num = scipy.ndimage.label(mask)
+    return num
+
+def render_mask(mask):
     r = np.zeros_like(mask).astype(np.uint8)
     g = np.zeros_like(mask).astype(np.uint8)
     b = np.zeros_like(mask).astype(np.uint8)
 
-    r[idx] = 192
-    g[idx] = 128
-    b[idx] = 128
+    r[mask] = 192
+    g[mask] = 128
+    b[mask] = 128
     return Image.fromarray(np.stack([r, g, b], axis=2))
 
-def apply_mask(img, mask, layer):
+def apply_mask(img, mask):
     arr = np.array(img)
-    idx = mask != layer
+    idx = mask == False
     arr[idx] = 255
     return Image.fromarray(arr)
 
@@ -72,9 +77,12 @@ def preprocess_image(img, args):
     result.append(img)
 
     mask = segment_image(img, fcn)
-    result.append(render_mask(mask, 15))
+    regions = count_regions(mask)
+    if regions != 1:
+        return []
+    result.append(render_mask(mask))
 
-    img = apply_mask(img, mask, 15)
+    img = apply_mask(img, mask)
     result.append(img)
 
     return result
