@@ -60,7 +60,7 @@ def render_mask(mask, layer):
 def apply_mask(img, mask, layer):
     arr = np.array(img)
     idx = mask != layer
-    arr[idx] = [1, 1, 1]
+    arr[idx] = 255
     return Image.fromarray(arr)
 
 def preprocess_image(img, args):
