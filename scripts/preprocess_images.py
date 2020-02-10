@@ -95,7 +95,10 @@ def preprocess_images(args):
     total_files = len(input_files)
     num = 1
     for i, input_file in enumerate(input_files):
-        input_img = Image.open(os.path.join(args.input_dir, input_file)).convert("RGB")
+        try:
+            input_img = Image.open(os.path.join(args.input_dir, input_file)).convert("RGB")
+        except:
+            continue
         result = preprocess_image(input_img, args)
         if result:
             if args.interim:
