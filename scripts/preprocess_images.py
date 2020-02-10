@@ -90,6 +90,8 @@ def preprocess_images(args):
         input_img = Image.open(os.path.join(args.input_dir, input_file)).convert("RGB")
         result = preprocess_image(input_img, args)
         if result is not None:
+            if not args.debug:
+                result = result[-1:]
             output_img = Image.new("RGB", (args.size*len(result), args.size))
             for i, img in enumerate(result):
                 output_img.paste(img, (i*args.size, 0))
@@ -104,6 +106,7 @@ def main():
     parser.add_argument("--input-dir", type=str, help="input images dir")
     parser.add_argument("--output-dir", type=str, help="output images dir")
     parser.add_argument("--size", type=int, default=256, help="output image size")
+    parser.add_argument("--debug", action="store_true", help="store intermediate results")
 
     args = parser.parse_args()
 
