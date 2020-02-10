@@ -68,7 +68,7 @@ def preprocess_image(img, args):
 
     img = resize_and_crop(img, args.size)
     if img is None:
-        return None
+        return []
     result.append(img)
 
     mask = segment_image(img, fcn)
@@ -84,29 +84,43 @@ def preprocess_images(args):
         os.makedirs(args.output_dir)
 
     input_files = list(os.listdir(args.input_dir))
-    num_files = len(input_files)
+    total_files = len(input_files)
     num = 1
     for i, input_file in enumerate(input_files):
         input_img = Image.open(os.path.join(args.input_dir, input_file)).convert("RGB")
         result = preprocess_image(input_img, args)
-        if result is not None:
-            if not args.debug:
-                result = result[-1:]
-            output_img = Image.new("RGB", (args.size*len(result), args.size))
-            for i, img in enumerate(result):
-                output_img.paste(img, (i*args.size, 0))
+        if result:
+            if args.interim:
+                output_img = Image.new("RGB", (args.size*len(result), args.size))
+                for i, img in enumerate(result):
+                    output_img.paste(img, (i*args.size, 0))
+            else:
+                output_img = result[-1]
 
-            output_file = "{}/{:05d}.jpg".format(args.output_dir, num)
-            output_img.save(output_file)
+            if args.show:
+                output_img.show()
+            else:
+                output_file = "{}/{:05d}.jpg".format(args.output_dir, num)
+                output_img.save(output_file)
+
+            sys.stdout.write("\r{}/{}".format(num, total_files))
+            sys.stdout.flush()
+
+            if args.limit and num >= args.limit:
+                break
             num = num + 1
-        sys.stderr.write("{}/{}\r".format(i+1, num_files))
+
+    sys.stdout.write("\n")
+    sys.stdout.flush()
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input-dir", type=str, help="input images dir")
     parser.add_argument("--output-dir", type=str, help="output images dir")
     parser.add_argument("--size", type=int, default=256, help="output image size")
-    parser.add_argument("--debug", action="store_true", help="store intermediate results")
+    parser.add_argument("--limit", type=int, default=0, help="max number of output images")
+    parser.add_argument("--show", action="store_true", help="show results instead of saving")
+    parser.add_argument("--interim", action="store_true", help="store intermediate results")
 
     args = parser.parse_args()
 
